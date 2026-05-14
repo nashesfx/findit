@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FindIt — University Lost & Found</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --navy: #0f1f3d; --navy-mid: #1a3260; --accent: #f5a623;
+            --surface: #ffffff; --surface-2: #f7f8fc; --surface-3: #eef0f6;
+            --border: #e2e5ef; --border-strong: #c8ccdb;
+            --text-primary: #0f1f3d; --text-secondary: #5a6282; --text-muted: #9aa0ba;
+            --green: #1a9e6e; --green-bg: #e8f8f2;
+            --amber: #d97706; --amber-bg: #fef3cd;
+            --red: #c0392b; --red-bg: #fdecea;
+            --sidebar-w: 220px; --topbar-h: 64px;
+        }
+
+        body { font-family: 'DM Sans', sans-serif; background: var(--surface-2); color: var(--text-primary); min-height: 100vh; display: flex; font-size: 14px; }
+
+        /* Sidebar */
+        .sidebar { width: var(--sidebar-w); min-height: 100vh; background: var(--navy); display: flex; flex-direction: column; position: fixed; left: 0; top: 0; z-index: 100; }
+        .sidebar-brand { padding: 22px 24px 18px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+        .brand-mark { display: flex; align-items: center; gap: 10px; }
+        .brand-icon { width: 32px; height: 32px; background: var(--accent); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+        .brand-text { font-size: 18px; font-weight: 600; color: #fff; letter-spacing: -0.3px; }
+        .brand-sub { font-size: 10px; color: rgba(255,255,255,0.4); margin-top: 2px; text-transform: uppercase; }
+        .sidebar-nav { padding: 20px 12px; flex: 1; display: flex; flex-direction: column; gap: 2px; }
+        .nav-label { font-size: 10px; font-weight: 600; text-transform: uppercase; color: rgba(255,255,255,0.28); padding: 0 12px; margin: 12px 0 6px; }
+        .nav-btn { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 8px; border: none; background: transparent; color: rgba(255,255,255,0.55); font-family: inherit; font-size: 13.5px; cursor: pointer; transition: all 0.15s; width: 100%; text-align: left; }
+        .nav-btn:hover { background: rgba(255,255,255,0.07); color: #fff; }
+        .nav-btn.active { background: rgba(245,166,35,0.18); color: var(--accent); font-weight: 500; }
+        .sidebar-footer { padding: 16px 12px; border-top: 1px solid rgba(255,255,255,0.08); }
+        .backup-btn { display: flex; align-items: center; gap: 8px; width: 100%; padding: 9px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.12); background: transparent; color: rgba(255,255,255,0.5); font-family: inherit; font-size: 12.5px; cursor: pointer; }
+        .backup-btn:hover { background: rgba(255,255,255,0.07); color: #fff; }
+
+        /* Main */
+        .main { margin-left: var(--sidebar-w); flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
+        .topbar { height: var(--topbar-h); background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 32px; position: sticky; top: 0; z-index: 50; }
+        .topbar-title { font-size: 16px; font-weight: 500; }
+        .topbar-right { margin-left: auto; display: flex; gap: 12px; align-items: center; }
+        .topbar-badge { background: var(--surface-3); border: 1px solid var(--border); border-radius: 20px; padding: 4px 12px; font-size: 12px; color: var(--text-secondary); font-family: 'DM Mono', monospace; }
+        .content { padding: 32px; flex: 1; }
+        .page { display: none; }
+        .page.active { display: block; }
+
+        /* Stats & Notice */
+        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
+        .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 22px 24px; position: relative; overflow: hidden; }
+        .stat-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; }
+        .stat-card.total::before { background: var(--navy); }
+        .stat-card.lost::before { background: var(--red); }
+        .stat-card.unclaimed::before { background: var(--amber); }
+        .stat-card.returned::before { background: var(--green); }
+        .stat-label { font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--text-muted); margin-bottom: 10px; }
+        .stat-value { font-size: 38px; font-weight: 300; line-height: 1; font-family: 'DM Mono', monospace; }
+        .stat-card.total .stat-value { color: var(--navy); }
+        .stat-card.lost .stat-value { color: var(--red); }
+        .stat-card.unclaimed .stat-value { color: var(--amber); }
+        .stat-card.returned .stat-value { color: var(--green); }
+        .notice { background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--navy); border-radius: 10px; padding: 18px 22px; }
+
+        /* Forms & Tables */
+        .page-header { margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+        .page-title { font-size: 20px; font-weight: 500; }
+        .page-desc { font-size: 12.5px; color: var(--text-muted); margin-top: 3px; }
+        .table-toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; gap: 12px; }
+        .search-wrap { position: relative; flex: 1; max-width: 340px; }
+        .search-bar { width: 100%; padding: 9px 12px; border: 1px solid var(--border-strong); border-radius: 8px; font-family: inherit; font-size: 13.5px; }
+        .table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+        table { width: 100%; border-collapse: collapse; }
+        thead th { background: var(--surface-2); padding: 11px 16px; text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--text-muted); border-bottom: 1px solid var(--border); }
+        tbody td { padding: 13px 16px; border-bottom: 1px solid var(--border); font-size: 13.5px; vertical-align: middle; }
+        tbody tr:hover td { background: var(--surface-2); }
+        .record-id { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--text-secondary); background: var(--surface-3); padding: 3px 8px; border-radius: 5px; }
+        
+        .item-info { display: flex; gap: 12px; align-items: center; }
+        .img-thumb { width: 44px; height: 44px; border-radius: 8px; object-fit: cover; border: 1px solid var(--border); background: var(--surface-3); display: flex; align-items: center; justify-content: center; font-size: 10px; color: var(--text-muted); flex-shrink: 0; }
+        .item-name { font-weight: 500; color: var(--text-primary); }
+        .item-desc { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+        
+        .badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 11.5px; font-weight: 600; text-transform: uppercase; }
+        .badge-found { background: var(--amber-bg); color: var(--amber); }
+        .badge-claimed { background: var(--green-bg); color: var(--green); }
+        .badge-lost { background: var(--red-bg); color: var(--red); }
+        
+        .action-group { display: flex; gap: 6px; }
+        .btn-edit, .btn-del, .btn-match { padding: 5px 12px; border-radius: 6px; font-family: inherit; font-size: 12px; font-weight: 500; cursor: pointer; border: 1px solid var(--border); background: var(--surface); transition: 0.15s; }
+        .btn-edit:hover { background: var(--navy); color: #fff; }
+        .btn-del { color: var(--red); border-color: var(--border); }
+        .btn-del:hover { background: var(--red-bg); }
+        .btn-match { color: var(--accent); border-color: var(--accent); }
+        .btn-match:hover { background: var(--accent); color: #fff; }
+        .btn-primary { padding: 9px 18px; background: var(--navy); color: #fff; border: none; border-radius: 8px; font-family: inherit; font-size: 13.5px; font-weight: 500; cursor: pointer; }
+
+        .form-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 28px; max-width: 600px; }
+        .form-row { margin-bottom: 18px; }
+        .form-row label { display: block; font-size: 12.5px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; }
+        .form-row input, .form-row select, .form-row textarea { width: 100%; padding: 10px 13px; border: 1px solid var(--border-strong); border-radius: 8px; font-family: inherit; font-size: 13.5px; }
+        .form-row textarea { resize: vertical; min-height: 90px; }
+        .form-msg { display: inline-flex; align-items: center; margin-top: 14px; font-size: 13px; font-weight: 500; color: var(--green); }
+
+        /* Modals */
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(10,20,40,0.55); z-index: 200; backdrop-filter: blur(2px); align-items: center; justify-content: center; }
+        .modal-overlay.active { display: flex; }
+        .modal-window { background: var(--surface); border-radius: 14px; padding: 28px; width: 460px; box-shadow: 0 20px 60px rgba(0,0,0,0.18); max-height: 90vh; overflow-y: auto; }
+        .modal-window.large { width: 650px; }
+        .modal-header { display: flex; justify-content: space-between; margin-bottom: 22px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+        .modal-title { font-size: 15px; font-weight: 600; }
+        .modal-close { border: none; background: transparent; cursor: pointer; font-size: 18px; }
+        .modal-actions { margin-top: 22px; display: flex; gap: 10px; }
+        .btn-ghost { padding: 9px 18px; background: var(--surface); color: var(--text-secondary); border: 1px solid var(--border-strong); border-radius: 8px; font-family: inherit; font-size: 13.5px; cursor: pointer; }
+        
+        .claim-audit-box { background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; padding: 16px; margin-top: 12px; display: none; }
+        .claim-audit-box.active { display: block; }
+        
+        /* Match Results Styles */
+        .match-card { display: flex; gap: 15px; padding: 15px; border: 1px solid var(--border-strong); border-radius: 10px; margin-bottom: 12px; background: var(--surface-2); }
+        .match-card:hover { border-color: var(--navy-mid); }
+        .match-card img { width: 60px; height: 60px; border-radius: 8px; object-fit: cover; }
+    </style>
+</head>
+<body>
+
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <div class="brand-mark">
+                <div class="brand-icon">🔍</div>
+                <div><div class="brand-text">FindIt</div><div class="brand-sub">Lost &amp; Found</div></div>
+            </div>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="nav-label">Navigation</div>
+            <button class="nav-btn active tab-link" onclick="openPage('dashboard', this)">Dashboard</button>
+            <button class="nav-btn tab-link" onclick="openPage('inventory', this)">Item Inventory</button>
+            <div class="nav-label">Reports</div>
+            <button class="nav-btn tab-link" onclick="openPage('report-found', this)">Log Found Item</button>
+            <button class="nav-btn tab-link" onclick="openPage('report-lost', this)">Report Lost Item</button>
+        </nav>
+        <div class="sidebar-footer">
+            <button class="backup-btn" onclick="downloadBackup()">Download JSON Backup</button>
+        </div>
+    </aside>
+
+    <div class="main">
+        <div class="topbar">
+            <span class="topbar-title" id="topbar-label">System Dashboard</span>
+            <div class="topbar-right"><span class="topbar-badge" id="topbar-time"></span></div>
+        </div>
+
+        <div class="content">
+            <div id="dashboard" class="page active">
+                <div class="stats-grid">
+                    <div class="stat-card total"><div class="stat-label">Total Records</div><div class="stat-value" id="stat-total">0</div></div>
+                    <div class="stat-card lost"><div class="stat-label">Reported Lost</div><div class="stat-value" id="stat-lost">0</div></div>
+                    <div class="stat-card unclaimed"><div class="stat-label">Found & Unclaimed</div><div class="stat-value" id="stat-found">0</div></div>
+                    <div class="stat-card returned"><div class="stat-label">Successfully Claimed</div><div class="stat-value" id="stat-claimed">0</div></div>
+                </div>
+                <div class="notice">
+                    <p><strong>System Notice:</strong> Welcome to the campus lost and found ledger. Both missing items and surrendered found items are managed here.</p>
+                </div>
+            </div>
+
+            <div id="inventory" class="page">
+                <div class="page-header"><div><div class="page-title">Item Inventory</div><div class="page-desc">All logged lost and found records</div></div></div>
+                <div class="table-toolbar">
+                    <input type="text" id="search-input" class="search-bar" style="max-width:340px;" placeholder="Search by ID, name, or location…" onkeyup="populateTable()">
+                    <button class="btn-primary" onclick="fetchItems()">Refresh Data</button>
+                </div>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width:12%">Record ID</th>
+                                <th style="width:30%">Item Details</th>
+                                <th style="width:12%">Category</th>
+                                <th style="width:18%">Location</th>
+                                <th style="width:15%">Status / Audit</th>
+                                <th style="width:13%">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inventory-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="report-found" class="page">
+                <div class="page-header"><div><div class="page-title">Log a Found Item</div><div class="page-desc">Admin: Register an item surrendered to the office</div></div></div>
+                <div class="form-card">
+                    <form id="found-form" onsubmit="event.preventDefault(); submitItem('found', 'found-form');">
+                        <div class="form-row"><label>Item Name</label><input type="text" name="name" required></div>
+                        <div class="form-row"><label>Upload Image</label><input type="file" name="image" accept="image/*"></div>
+                        <div class="form-row">
+                            <label>Category</label>
+                            <select name="cat"><option>Electronics</option><option>Clothing</option><option>Books/IDs</option><option>Accessories</option><option>Keys</option><option>Other</option></select>
+                        </div>
+                        <div class="form-row"><label>Location Found</label><input type="text" name="loc" required></div>
+                        <div class="form-row"><label>Notes / Surrendered By</label><textarea name="desc"></textarea></div>
+                        <button type="submit" class="btn-primary">Log Found Item</button>
+                        <div class="form-msg"></div>
+                    </form>
+                </div>
+            </div>
+
+            <div id="report-lost" class="page">
+                <div class="page-header"><div><div class="page-title">Report a Lost Item</div><div class="page-desc">Student: File a report for a missing item</div></div></div>
+                <div class="form-card">
+                    <form id="lost-form" onsubmit="event.preventDefault(); submitItem('lost', 'lost-form');">
+                        <div class="form-row"><label>Item Name / Brief Description</label><input type="text" name="name" required></div>
+                        <div class="form-row"><label>Upload Reference Image (Optional)</label><input type="file" name="image" accept="image/*"></div>
+                        <div class="form-row">
+                            <label>Category</label>
+                            <select name="cat"><option>Electronics</option><option>Clothing</option><option>Books/IDs</option><option>Accessories</option><option>Keys</option><option>Other</option></select>
+                        </div>
+                        <div class="form-row"><label>Last Known Location</label><input type="text" name="loc" required></div>
+                        <div class="form-row"><label>Detailed Description</label><textarea name="desc"></textarea></div>
+                        <div style="border-top: 1px solid var(--border); padding-top: 15px; margin-top: 15px;">
+                            <div class="form-row"><label>Student Name (Reporter)</label><input type="text" name="reporter_name" required></div>
+                            <div class="form-row"><label>Student ID / Contact Info</label><input type="text" name="reporter_contact" required></div>
+                        </div>
+                        <button type="submit" class="btn-primary">File Lost Report</button>
+                        <div class="form-msg"></div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="match-modal">
+        <div class="modal-window large">
+            <div class="modal-header">
+                <div>
+                    <span class="modal-title">Smart Match Results</span>
+                    <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Searching database for items matching: <strong id="match-keywords" style="color:var(--text-primary);"></strong></div>
+                </div>
+                <button class="modal-close" onclick="closeMatchModal()">✕</button>
+            </div>
+            
+            <div id="match-results-container">
+                </div>
+            
+            <div class="modal-actions" style="border-top: 1px solid var(--border); padding-top: 15px;">
+                <button class="btn-ghost" onclick="closeMatchModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="edit-modal">
+        <div class="modal-window">
+            <div class="modal-header"><span class="modal-title">Update Record</span><button class="modal-close" onclick="closeEditModal()">✕</button></div>
+            <input type="hidden" id="edit-id">
+            <div class="form-row"><label>Item Name</label><input type="text" id="edit-name" required></div>
+            <div class="form-row">
+                <label>Current Status</label>
+                <select id="edit-status" onchange="toggleClaimFields()">
+                    <option value="lost">Lost (Student Searching)</option>
+                    <option value="found">Found (In Admin Office)</option>
+                    <option value="claimed">Claimed (Returned to Owner)</option>
+                </select>
+            </div>
+            
+            <div id="claim-audit-section" class="claim-audit-box">
+                <div style="font-size: 11.5px; font-weight: 600; color: var(--text-secondary); margin-bottom: 12px; text-transform: uppercase;">Claim Audit Log</div>
+                <div class="form-row"><label>Student Name (Claimant)</label><input type="text" id="edit-claimer-name"></div>
+                <div class="form-row" style="margin-bottom: 0;"><label>Student ID #</label><input type="text" id="edit-claimer-id"></div>
+            </div>
+
+            <div class="form-row" style="margin-top: 18px;"><label>Update Notes</label><textarea id="edit-desc" rows="2"></textarea></div>
+            <div class="modal-actions">
+                <button class="btn-primary" onclick="saveUpdate()">Save Changes</button>
+                <button class="btn-ghost" onclick="closeEditModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:5000/api/items';
+        let databaseRecords = [];
+        const PAGE_LABELS = { dashboard: 'System Dashboard', inventory: 'Item Inventory', 'report-found': 'Log Found Item', 'report-lost': 'Report Lost Item' };
+
+        function setTime() {
+            document.getElementById('topbar-time').textContent = new Date().toLocaleString('en-PH', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+        }
+        setTime(); setInterval(setTime, 30000);
+
+        function openPage(pageId, btn) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.tab-link').forEach(b => b.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+            btn.classList.add('active');
+            document.getElementById('topbar-label').textContent = PAGE_LABELS[pageId];
+            if (pageId === 'dashboard' || pageId === 'inventory') fetchItems();
+        }
+
+        async function fetchItems() {
+            try {
+                const response = await fetch(API_URL);
+                databaseRecords = await response.json();
+                updateDashboard();
+                populateTable();
+            } catch (error) { console.error("Database connection failed:", error); }
+        }
+
+        function updateDashboard() {
+            document.getElementById('stat-total').innerText = databaseRecords.length;
+            document.getElementById('stat-lost').innerText = databaseRecords.filter(i => i.status === 'lost').length;
+            document.getElementById('stat-found').innerText = databaseRecords.filter(i => i.status === 'found').length;
+            document.getElementById('stat-claimed').innerText = databaseRecords.filter(i => i.status === 'claimed').length;
+        }
+
+        function populateTable() {
+            const query = document.getElementById('search-input').value.toLowerCase();
+            const tbody = document.getElementById('inventory-tbody');
+            tbody.innerHTML = '';
+
+            const filtered = databaseRecords.filter(item =>
+                item.name.toLowerCase().includes(query) || item.id.toLowerCase().includes(query) || item.loc.toLowerCase().includes(query)
+            );
+
+            filtered.forEach(item => {
+                let badgeClass = 'badge-found'; let statusText = 'Found';
+                if(item.status === 'lost') { badgeClass = 'badge-lost'; statusText = 'Lost'; }
+                if(item.status === 'claimed') { badgeClass = 'badge-claimed'; statusText = 'Claimed'; }
+                
+                const imgHtml = item.image ? `<img src="/uploads/${item.image}" class="img-thumb">` : `<div class="img-thumb">No Img</div>`;
+                
+                let auditLog = '';
+                if(item.status === 'claimed') auditLog = `<div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Claimed By: ${item.claimer_name || 'N/A'}</div>`;
+                else if (item.status === 'lost' && item.reporter_name) auditLog = `<div style="font-size: 11px; color: var(--red); margin-top: 4px;">Reported By: ${item.reporter_name}</div>`;
+
+                // NEW: Show "Find Match" button only if the item is Lost
+                const matchBtnHtml = item.status === 'lost' ? `<button class="btn-match" onclick="findMatches('${item.id}')">Matches</button>` : '';
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td><span class="record-id">${item.id}</span></td>
+                        <td>
+                            <div class="item-info">
+                                ${imgHtml}
+                                <div><div class="item-name">${item.name}</div><div class="item-desc">${item.desc || ''}</div></div>
+                            </div>
+                        </td>
+                        <td><span class="badge" style="background:var(--surface-3);color:var(--text-secondary); border: 1px solid var(--border);">${item.cat}</span></td>
+                        <td style="color: var(--text-secondary);">${item.loc}</td>
+                        <td><span class="badge ${badgeClass}">${statusText}</span>${auditLog}</td>
+                        <td>
+                            <div class="action-group">
+                                ${matchBtnHtml}
+                                <button class="btn-edit" onclick="openEditModal('${item.id}')">Edit</button>
+                                <button class="btn-del" onclick="deleteRecord('${item.id}')">Del</button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        async function submitItem(statusType, formId) {
+            const form = document.getElementById(formId);
+            const formData = new FormData();
+            formData.append('name', form.querySelector('[name="name"]').value);
+            formData.append('cat', form.querySelector('[name="cat"]').value);
+            formData.append('loc', form.querySelector('[name="loc"]').value);
+            formData.append('desc', form.querySelector('[name="desc"]').value);
+            formData.append('status', statusType);
+
+            if (statusType === 'lost') {
+                formData.append('reporter_name', form.querySelector('[name="reporter_name"]').value);
+                formData.append('reporter_contact', form.querySelector('[name="reporter_contact"]').value);
+            }
+
+            const imageInput = form.querySelector('[name="image"]');
+            if(imageInput && imageInput.files[0]) formData.append('image', imageInput.files[0]);
+
+            await fetch(API_URL, { method: 'POST', body: formData });
+            form.reset();
+            const msg = form.querySelector('.form-msg');
+            msg.innerHTML = '✓ Record saved to database.';
+            setTimeout(() => msg.innerHTML = '', 4000);
+            fetchItems();
+        }
+
+        // --- NEW: MATCHING SYSTEM LOGIC ---
+        async function findMatches(id) {
+            try {
+                const response = await fetch(`${API_URL}/${id}/matches`);
+                const data = await response.json();
+                
+                document.getElementById('match-keywords').innerText = data.lost_item.name;
+                const container = document.getElementById('match-results-container');
+                container.innerHTML = '';
+
+                if(data.matches.length === 0) {
+                    container.innerHTML = `<div style="padding: 30px; text-align: center; color: var(--text-muted);">No found items in the database match this description yet.</div>`;
+                } else {
+                    data.matches.forEach(match => {
+                        const imgHtml = match.image ? `<img src="/uploads/${match.image}">` : `<div style="width:60px;height:60px;background:var(--surface-3);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--text-muted);border:1px solid var(--border);">No Img</div>`;
+                        container.innerHTML += `
+                            <div class="match-card">
+                                ${imgHtml}
+                                <div style="flex: 1;">
+                                    <div style="font-weight: 500; font-size: 15px; color: var(--navy);">${match.name} <span class="record-id" style="margin-left: 8px;">${match.id}</span></div>
+                                    <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;"><strong>Found at:</strong> ${match.loc}</div>
+                                    <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;"><strong>Notes:</strong> ${match.desc || 'None'}</div>
+                                </div>
+                                <button class="btn-primary" style="height: 35px; padding: 0 15px;" onclick="closeMatchModal(); openEditModal('${match.id}')">View / Claim</button>
+                            </div>
+                        `;
+                    });
+                }
+                document.getElementById('match-modal').classList.add('active');
+            } catch (err) {
+                console.error("Match error:", err);
+            }
+        }
+
+        function closeMatchModal() { document.getElementById('match-modal').classList.remove('active'); }
+
+        // Edit & Delete Logic
+        function openEditModal(id) {
+            const item = databaseRecords.find(i => i.id === id);
+            document.getElementById('edit-id').value = item.id;
+            document.getElementById('edit-name').value = item.name;
+            document.getElementById('edit-status').value = item.status;
+            document.getElementById('edit-desc').value = item.desc || '';
+            document.getElementById('edit-claimer-name').value = item.claimer_name || '';
+            document.getElementById('edit-claimer-id').value = item.claimer_id || '';
+            toggleClaimFields();
+            document.getElementById('edit-modal').classList.add('active');
+        }
+
+        function toggleClaimFields() {
+            const status = document.getElementById('edit-status').value;
+            const section = document.getElementById('claim-audit-section');
+            if(status === 'claimed') section.classList.add('active');
+            else section.classList.remove('active');
+        }
+
+        function closeEditModal() { document.getElementById('edit-modal').classList.remove('active'); }
+
+        async function saveUpdate() {
+            const id = document.getElementById('edit-id').value;
+            const payload = {
+                name: document.getElementById('edit-name').value,
+                status: document.getElementById('edit-status').value,
+                desc: document.getElementById('edit-desc').value,
+                claimer_name: document.getElementById('edit-claimer-name').value,
+                claimer_id: document.getElementById('edit-claimer-id').value
+            };
+            await fetch(`${API_URL}/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            closeEditModal();
+            fetchItems();
+        }
+
+        async function deleteRecord(id) {
+            if (confirm(`Permanently delete record ${id}?`)) {
+                await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+                fetchItems();
+            }
+        }
+
+        function downloadBackup() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(databaseRecords, null, 2));
+            const anchor = document.createElement('a');
+            anchor.setAttribute("href", dataStr);
+            anchor.setAttribute("download", "university_lostfound_backup.json");
+            document.body.appendChild(anchor);
+            anchor.click(); anchor.remove();
+        }
+
+        fetchItems();
+    </script>
+</body>
+</html>

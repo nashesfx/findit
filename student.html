@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FindIt — Student Portal</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --navy: #0f1f3d;
+            --navy-mid: #1a3260;
+            --accent: #f5a623;
+            --accent-dim: rgba(245,166,35,0.12);
+            --surface: #ffffff;
+            --surface-2: #f7f8fc;
+            --surface-3: #eef0f6;
+            --border: #e2e5ef;
+            --border-strong: #c8ccdb;
+            --text-primary: #0f1f3d;
+            --text-secondary: #5a6282;
+            --text-muted: #9aa0ba;
+            --green: #1a9e6e;
+            --green-bg: #e8f8f2;
+            --red: #c0392b;
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--surface-2);
+            color: var(--text-primary);
+            min-height: 100vh;
+            font-size: 14px;
+        }
+
+        /* ── Navbar ── */
+        .navbar {
+            background: var(--navy);
+            height: 64px;
+            display: flex;
+            align-items: center;
+            padding: 0 40px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo-icon {
+            width: 30px; height: 30px;
+            background: var(--accent);
+            border-radius: 7px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 15px;
+            flex-shrink: 0;
+        }
+
+        .logo-text {
+            font-size: 17px;
+            font-weight: 600;
+            color: #fff;
+            letter-spacing: -0.2px;
+        }
+
+        .logo-sub {
+            font-size: 10px;
+            color: rgba(255,255,255,0.35);
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            margin-top: 1px;
+        }
+
+        .nav-center {
+            display: flex;
+            gap: 4px;
+            margin-left: 40px;
+        }
+
+        .nav-btn {
+            padding: 7px 16px;
+            border-radius: 7px;
+            border: none;
+            background: transparent;
+            color: rgba(255,255,255,0.55);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 13.5px;
+            font-weight: 400;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .nav-btn:hover { background: rgba(255,255,255,0.07); color: #fff; }
+
+        .nav-btn.active {
+            background: rgba(245,166,35,0.18);
+            color: var(--accent);
+            font-weight: 500;
+        }
+
+        .nav-right { margin-left: auto; }
+
+        .btn-admin-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 7px 14px;
+            border-radius: 7px;
+            border: 1px solid rgba(245,166,35,0.4);
+            background: transparent;
+            color: var(--accent);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .btn-admin-link:hover {
+            background: var(--accent-dim);
+            border-color: var(--accent);
+        }
+
+        /* ── Container ── */
+        .container {
+            max-width: 1060px;
+            margin: 0 auto;
+            padding: 40px 24px;
+        }
+
+        .page { display: none; }
+        .page.active { display: block; }
+
+        /* ── Hero ── */
+        .hero {
+            text-align: center;
+            margin-bottom: 36px;
+        }
+
+        .hero-eyebrow {
+            display: inline-block;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: var(--accent);
+            background: var(--accent-dim);
+            padding: 4px 12px;
+            border-radius: 20px;
+            margin-bottom: 14px;
+        }
+
+        .hero h1 {
+            font-size: 30px;
+            font-weight: 500;
+            color: var(--text-primary);
+            letter-spacing: -0.4px;
+            margin-bottom: 8px;
+        }
+
+        .hero p {
+            font-size: 14.5px;
+            color: var(--text-secondary);
+            max-width: 420px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* ── Search ── */
+        .search-wrap {
+            position: relative;
+            max-width: 420px;
+            margin: 22px auto 0;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 14px; top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            pointer-events: none;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 11px 14px 11px 40px;
+            border: 1px solid var(--border-strong);
+            border-radius: 10px;
+            background: var(--surface);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 14px;
+            color: var(--text-primary);
+            transition: border-color 0.15s, box-shadow 0.15s;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--navy-mid);
+            box-shadow: 0 0 0 3px rgba(15,31,61,0.08);
+        }
+
+        .search-input::placeholder { color: var(--text-muted); }
+
+        /* ── Stats Strip ── */
+        .stats-strip {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 28px;
+            justify-content: center;
+        }
+
+        .strip-stat {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 9px 16px;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .strip-dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .strip-dot.green { background: var(--green); }
+        .strip-dot.navy { background: var(--navy); }
+
+        .strip-count {
+            font-family: 'DM Mono', monospace;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        /* ── Item Grid ── */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+            gap: 18px;
+        }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: border-color 0.15s, box-shadow 0.15s;
+        }
+
+        .card:hover {
+            border-color: var(--border-strong);
+            box-shadow: 0 4px 20px rgba(15,31,61,0.07);
+        }
+
+        .card-img {
+            width: 100%;
+            height: 160px;
+            object-fit: cover;
+            background: var(--surface-3);
+            display: block;
+        }
+
+        .card-img-placeholder {
+            width: 100%;
+            height: 160px;
+            background: var(--surface-3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+            font-size: 13px;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .card-img-icon {
+            font-size: 28px;
+            opacity: 0.4;
+        }
+
+        .card-body { padding: 16px; }
+
+        .card-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .cat-pill {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 11.5px;
+            font-weight: 500;
+            background: var(--surface-3);
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+        }
+
+        .available-dot {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 11px;
+            color: var(--green);
+            font-weight: 500;
+        }
+
+        .available-dot::before {
+            content: '';
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            background: var(--green);
+        }
+
+        .card-title {
+            font-size: 15px;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 5px;
+        }
+
+        .card-loc {
+            font-size: 12.5px;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-bottom: 8px;
+        }
+
+        .card-desc {
+            font-size: 12.5px;
+            color: var(--text-secondary);
+            line-height: 1.55;
+        }
+
+        .card-footer {
+            padding: 12px 16px;
+            border-top: 1px solid var(--border);
+            background: var(--surface-2);
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        /* ── Empty State ── */
+        .empty-state {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-muted);
+        }
+
+        .empty-icon {
+            font-size: 40px;
+            opacity: 0.4;
+            margin-bottom: 12px;
+        }
+
+        .empty-state p { font-size: 14px; }
+
+        /* ── Report Form Page ── */
+        .report-layout {
+            display: grid;
+            grid-template-columns: 1fr 340px;
+            gap: 24px;
+            align-items: start;
+        }
+
+        @media (max-width: 720px) {
+            .report-layout { grid-template-columns: 1fr; }
+        }
+
+        .form-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 28px;
+        }
+
+        .form-section-title {
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 16px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .form-row { margin-bottom: 16px; }
+
+        .form-row label {
+            display: block;
+            font-size: 12.5px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+            letter-spacing: 0.2px;
+        }
+
+        .form-row input[type="text"],
+        .form-row input[type="file"],
+        .form-row select,
+        .form-row textarea {
+            width: 100%;
+            padding: 10px 13px;
+            border: 1px solid var(--border-strong);
+            border-radius: 8px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 13.5px;
+            color: var(--text-primary);
+            background: var(--surface);
+            transition: border-color 0.15s, box-shadow 0.15s;
+            -webkit-appearance: none;
+        }
+
+        .form-row input[type="file"] {
+            padding: 8px 10px;
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+
+        .form-row input:focus,
+        .form-row select:focus,
+        .form-row textarea:focus {
+            outline: none;
+            border-color: var(--navy-mid);
+            box-shadow: 0 0 0 3px rgba(15,31,61,0.08);
+        }
+
+        .form-row textarea { resize: vertical; min-height: 85px; line-height: 1.5; }
+
+        .form-row input::placeholder { color: var(--text-muted); }
+
+        .form-divider {
+            height: 1px;
+            background: var(--border);
+            margin: 20px 0;
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 11px;
+            background: var(--navy);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.15s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+        }
+
+        .btn-submit:hover { background: var(--navy-mid); }
+
+        .form-msg {
+            text-align: center;
+            margin-top: 12px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--green);
+            min-height: 18px;
+        }
+
+        /* ── Info Sidebar ── */
+        .info-sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .info-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .info-card-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+        }
+
+        .info-card p, .info-card li {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .info-card ul { padding-left: 16px; }
+        .info-card li { margin-bottom: 4px; }
+
+        .info-highlight {
+            background: var(--accent-dim);
+            border: 1px solid rgba(245,166,35,0.25);
+            border-radius: 8px;
+            padding: 14px 16px;
+        }
+
+        .info-highlight p {
+            font-size: 12.5px;
+            color: var(--navy);
+            line-height: 1.55;
+        }
+
+        /* ── Footer ── */
+        .site-footer {
+            margin-top: 60px;
+            border-top: 1px solid var(--border);
+            padding: 24px 40px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .footer-logo {
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="logo">
+            <div class="logo-icon">🔍</div>
+            <div>
+                <div class="logo-text">FindIt</div>
+                <div class="logo-sub">Student Portal</div>
+            </div>
+        </div>
+        <div class="nav-center">
+            <button class="nav-btn active" id="nav-browse" onclick="showPage('browse', this)">Browse Found Items</button>
+            <button class="nav-btn" id="nav-report" onclick="showPage('report', this)">Report Lost Item</button>
+        </div>
+        <div class="nav-right">
+            <button class="btn-admin-link" onclick="window.location.href='/admin'">
+                Admin Login
+                <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8">
+                    <path d="M3 8h10M9 4l4 4-4 4"/>
+                </svg>
+            </button>
+        </div>
+    </nav>
+
+    <div class="container">
+
+        <!-- Browse Page -->
+        <div id="page-browse" class="page active">
+            <div class="hero">
+                <div class="hero-eyebrow">Student Affairs Office</div>
+                <h1>Lost something on campus?</h1>
+                <p>Browse items recently turned in to the office. If you recognize yours, visit us to claim it.</p>
+                <div class="search-wrap">
+                    <svg class="search-icon" width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8">
+                        <circle cx="8.5" cy="8.5" r="5.5"/>
+                        <line x1="13" y1="13" x2="18" y2="18"/>
+                    </svg>
+                    <input type="text" id="search" class="search-input" placeholder="Search by item name or location…" onkeyup="loadFoundItems()">
+                </div>
+            </div>
+
+            <div class="stats-strip" id="stats-strip">
+                <div class="strip-stat">
+                    <span class="strip-dot green"></span>
+                    <span class="strip-count" id="strip-available">—</span>
+                    <span>items available</span>
+                </div>
+                <div class="strip-stat">
+                    <span class="strip-dot navy"></span>
+                    <span class="strip-count" id="strip-total">—</span>
+                    <span>total logged</span>
+                </div>
+            </div>
+
+            <div class="grid" id="items-grid"></div>
+        </div>
+
+        <!-- Report Lost Item Page -->
+        <div id="page-report" class="page">
+            <div class="hero" style="margin-bottom: 28px;">
+                <div class="hero-eyebrow">File a Report</div>
+                <h1>Report a Lost Item</h1>
+                <p>Submit a report and we'll contact you if your item is turned in.</p>
+            </div>
+
+            <div class="report-layout">
+                <div class="form-card">
+                    <form id="lost-form" onsubmit="event.preventDefault(); submitLostItem();">
+                        <div class="form-section-title">Item Information</div>
+
+                        <div class="form-row">
+                            <label>Item Name / Brief Description</label>
+                            <input type="text" name="name" placeholder="e.g. Black TI-84 Calculator" required>
+                        </div>
+                        <div class="form-row">
+                            <label>Category</label>
+                            <select name="cat">
+                                <option>Electronics</option>
+                                <option>Clothing</option>
+                                <option>Books/IDs</option>
+                                <option>Accessories</option>
+                                <option>Keys</option>
+                                <option>Other</option>
+                            </select>
+                        </div>
+                        <div class="form-row">
+                            <label>Last Known Location</label>
+                            <input type="text" name="loc" placeholder="e.g. Library 3rd Floor, Room 204" required>
+                        </div>
+                        <div class="form-row">
+                            <label>Detailed Description</label>
+                            <textarea name="desc" placeholder="Color, brand, distinguishing marks, stickers, engravings…"></textarea>
+                        </div>
+                        <div class="form-row">
+                            <label>Reference Photo (Optional)</label>
+                            <input type="file" name="image" accept="image/*">
+                        </div>
+
+                        <div class="form-divider"></div>
+                        <div class="form-section-title">Your Information</div>
+
+                        <div class="form-row">
+                            <label>Full Name</label>
+                            <input type="text" name="reporter_name" placeholder="Juan dela Cruz" required>
+                        </div>
+                        <div class="form-row">
+                            <label>Student ID / Contact Number</label>
+                            <input type="text" name="reporter_contact" placeholder="2023-XXXXX or 09XXXXXXXXX" required>
+                        </div>
+
+                        <button type="submit" class="btn-submit">
+                            <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8">
+                                <path d="M3 10l7 7 7-7M10 3v14"/>
+                            </svg>
+                            Submit Report
+                        </button>
+                        <div id="form-msg" class="form-msg"></div>
+                    </form>
+                </div>
+
+                <div class="info-sidebar">
+                    <div class="info-card">
+                        <div class="info-card-title">
+                            <svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="10" cy="10" r="8"/><line x1="10" y1="9" x2="10" y2="14"/><circle cx="10" cy="6.5" r="0.6" fill="currentColor"/></svg>
+                            How it works
+                        </div>
+                        <ul>
+                            <li>Fill out the form with as much detail as possible.</li>
+                            <li>Our staff will review your report.</li>
+                            <li>If a match is found, we'll contact you via the info provided.</li>
+                            <li>Visit the office to verify and claim your item.</li>
+                        </ul>
+                    </div>
+
+                    <div class="info-card info-highlight">
+                        <div class="info-card-title" style="color: var(--navy);">
+                            📍 Office Location
+                        </div>
+                        <p>Student Affairs Office<br>Main Building, Ground Floor<br>Open Mon–Fri, 8:00 AM – 5:00 PM</p>
+                    </div>
+
+                    <div class="info-card">
+                        <div class="info-card-title">
+                            <svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="4" width="14" height="13" rx="2"/><line x1="3" y1="8" x2="17" y2="8"/><line x1="7" y1="2" x2="7" y2="6"/><line x1="13" y1="2" x2="13" y2="6"/></svg>
+                            Retention Policy
+                        </div>
+                        <p>Unclaimed items are held for <strong>90 days</strong> from the date they were logged, then donated per university policy.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Footer -->
+    <footer class="site-footer">
+        <span class="footer-logo">🔍 FindIt</span>
+        <span>Office of Student Affairs · University Lost &amp; Found System</span>
+        <span>For concerns, visit the main office.</span>
+    </footer>
+
+    <script>
+        const API_URL = 'http://localhost:5000/api/items';
+
+        const CAT_ICONS = {
+            'Electronics': '💻', 'Clothing': '👕', 'Books/IDs': '📚',
+            'Accessories': '💍', 'Keys': '🔑', 'Other': '📦'
+        };
+
+        function showPage(pageId, btn) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('page-' + pageId).classList.add('active');
+            btn.classList.add('active');
+            if (pageId === 'browse') loadFoundItems();
+        }
+
+        async function loadFoundItems() {
+            const query = document.getElementById('search').value.toLowerCase();
+            const res = await fetch(API_URL);
+            const data = await res.json();
+
+            const foundItems = data.filter(i =>
+                i.status === 'found' &&
+                (i.name.toLowerCase().includes(query) || i.loc.toLowerCase().includes(query))
+            );
+
+            const totalAvailable = data.filter(i => i.status === 'found').length;
+            document.getElementById('strip-available').textContent = totalAvailable;
+            document.getElementById('strip-total').textContent = data.length;
+
+            const grid = document.getElementById('items-grid');
+            grid.innerHTML = '';
+
+            if (foundItems.length === 0) {
+                grid.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">🔍</div>
+                        <p>No found items match your search.<br>Try a different keyword or check back later.</p>
+                    </div>`;
+                return;
+            }
+
+            foundItems.forEach(item => {
+                const icon = CAT_ICONS[item.cat] || '📦';
+                const imgBlock = item.image
+                    ? `<img class="card-img" src="/uploads/${item.image}" alt="${item.name}">`
+                    : `<div class="card-img-placeholder"><span class="card-img-icon">${icon}</span><span>No photo</span></div>`;
+
+                grid.innerHTML += `
+                    <div class="card">
+                        ${imgBlock}
+                        <div class="card-body">
+                            <div class="card-top">
+                                <span class="cat-pill">${item.cat}</span>
+                                <span class="available-dot">Available</span>
+                            </div>
+                            <div class="card-title">${item.name}</div>
+                            <div class="card-loc">
+                                <svg width="12" height="12" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M10 18s-7-6.3-7-11a7 7 0 0114 0c0 4.7-7 11-7 11z"/><circle cx="10" cy="7" r="2.5"/></svg>
+                                ${item.loc}
+                            </div>
+                            <div class="card-desc">${item.desc || 'No additional details provided.'}</div>
+                        </div>
+                        <div class="card-footer">Claim at the Student Affairs Office · Main Building</div>
+                    </div>
+                `;
+            });
+        }
+
+        async function submitLostItem() {
+            const form = document.getElementById('lost-form');
+            const formData = new FormData();
+            formData.append('name', form.querySelector('[name="name"]').value);
+            formData.append('cat', form.querySelector('[name="cat"]').value);
+            formData.append('loc', form.querySelector('[name="loc"]').value);
+            formData.append('desc', form.querySelector('[name="desc"]').value);
+            formData.append('reporter_name', form.querySelector('[name="reporter_name"]').value);
+            formData.append('reporter_contact', form.querySelector('[name="reporter_contact"]').value);
+            formData.append('status', 'lost');
+
+            const imageInput = form.querySelector('[name="image"]');
+            if (imageInput.files[0]) formData.append('image', imageInput.files[0]);
+
+            await fetch(API_URL, { method: 'POST', body: formData });
+            form.reset();
+            const msg = document.getElementById('form-msg');
+            msg.textContent = '✓ Report submitted! We will contact you if it is found.';
+            setTimeout(() => msg.textContent = '', 5000);
+        }
+
+        loadFoundItems();
+    </script>
+</body>
+</html>
